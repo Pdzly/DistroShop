@@ -1,4 +1,5 @@
 
+  [
   {
     "id": 0,
     "name": "arch linux",
@@ -8,3 +9,4 @@
     "downloadlink": "https://mirror.telepoint.bg/archlinux/iso/2026.09.01/archlinux-x86_64.iso",
     "filename": "archlinux-X86_64.iso"
   }
+  ]
