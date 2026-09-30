@@ -4,7 +4,7 @@
     "name": "arch linux",
     "description": "test",
     "descriptionfull": "test123",
-    "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftitrias.com%2Ffiles%2F2017%2F07%2Farchlinuxlogo.square.png&f=1&nofb=1&ipt=642f857012ece01329cdacc0b0e889fb6f4dd3224a5aeb596424745d6d8270bd&ipo=images",
+    "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fcdn0.iconfinder.com%2Fdata%2Ficons%2Fflat-round-system%2F512%2Farchlinux-512.png",
     "downloadlink": "https://mirror.telepoint.bg/archlinux/iso/2026.09.01/archlinux-x86_64.iso",
     "filename": "archlinux-X86_64.iso"
   }
