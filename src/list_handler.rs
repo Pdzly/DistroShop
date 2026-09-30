@@ -23,14 +23,14 @@ pub struct distro {
 
 // // // // // // // // // // // // // // // //
 
-fn get_home_dir() -> PathBuf {
+fn get_config_dir() -> PathBuf {
     let mut home_dir = dirs::home_dir().expect("unable to find home dir!");
-    home_dir.push("/config/distroshop/distros.json");
+    home_dir.push(".config/distroshop/");
     home_dir
 }
 
 fn get_local_distro_list() -> PathBuf {
-    let mut path = get_home_dir();
+    let mut path = get_config_dir();
     path.push("distros.json");
     path
 }
@@ -82,7 +82,8 @@ pub fn distro_list() -> Element {
                 info!("list not found locally. downloading.");
                 status_signal.set("Downloading...".to_string());
                 is_loading.set(true);
-
+                let mut configdir = get_config_dir();
+                fs::create_dir(configdir);
                 match download_and_save_list().await {
                     Ok(items) => {
                         items_signal.set(items);
