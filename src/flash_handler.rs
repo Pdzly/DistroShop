@@ -2,25 +2,52 @@ use crate::list_handler;
 use dioxus::prelude::*;
 use std::fs::File;
 use std::io;
-use std::io::Read;
+use std::io::{Read, Write};
+use nix::unistd::Uid;
+use std::env;
+use std::os::unix::process::CommandExt;
+use std::process::Command;
 
 static CSS: Asset = asset!("/assets/main.css");
-#[component]
-pub fn flasher(blockdev: String, isoimg: String, flashmode: String) -> io::Result<()> {
+
+
+
+pub fn flasher(blockdev: &str, isoimg: &str, flashmode: &str) -> io::Result<()> {
+
+    let args = vec![blockdev, isoimg, flashmode]; //the original arguments get shadowed later 
+
+    if Uid::current().is_root(){
     let mut blockdev = File::options().write(true).open(&blockdev)?;
     let mut isoimg = File::open(&isoimg)?;
-    match flashmode.as_str() {
-        "tiny buffer (safe)" => {
+    match flashmode {
+        "safe" => {
+            info!("using safe mode");
             io::copy(&mut isoimg, &mut blockdev)?;
             blockdev.sync_all()?;
         }
-        "whole file (fast)" => {
+        "fast" => {
+            info!("using fast mode");
             let mut buffer = Vec::new();
             isoimg.read_to_end(&mut buffer)?;
+            blockdev.write_all(&buffer)?;
+            blockdev.sync_all()?;
         }
-        _ => error!("somehow reached this case (must be cosmic ray"),
+        _ => {
+            error!("invalid flash mode");
+            std::process::exit(1);
+        }
     }
-    Ok(())
+ } else {
+    let exe_path = env::current_exe().expect("failed to read /proc/self/exe");
+    let err = Command::new("pkexec")
+    .arg(&exe_path)
+    .arg("-f")
+    .args(&args) 
+    .exec();
+    eprintln!("failed to exec pkexec: {err}");
+    std::process::exit(1); 
+ }
+    Ok(()) //unreachable but needed for previous '?' operators
 }
 #[component]
 pub fn show_more(distro: list_handler::distro, is_showing: Signal<bool>) -> Element {

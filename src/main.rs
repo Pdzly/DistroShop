@@ -1,5 +1,6 @@
+use std::env;
 use dioxus::prelude::*;
-
+use std::io;
 use crate::list_handler::distro_list;
 
 pub mod flash_handler;
@@ -14,6 +15,12 @@ fn app() -> Element {
     }
 }
 
-fn main() {
-    dioxus::launch(app);
+fn main() -> io::Result<()> {
+    let args: Vec<String> = env::args().collect();
+    if args.len() > 1 { 
+        flash_handler::flasher(&args[2], &args[3], &args[4])? ;
+        } else {
+        dioxus::launch(app);
+    }
+    Ok(())
 }

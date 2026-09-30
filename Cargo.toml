@@ -8,6 +8,9 @@ edition = "2021"
 
 [dependencies]
 dioxus = { version = "0.7.1", features = [] }
+dirs = "7.0.0"
+libc = "0.2.189"
+nix = { version = "0.31.3", features = ["user"] }
 reqwest = { version = "0.13.4", features = ["json"] }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.151"

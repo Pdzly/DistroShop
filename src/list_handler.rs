@@ -15,10 +15,21 @@ pub struct distro {
     pub description: String,
     pub descriptionfull: String,
     pub image: String,
+    pub filename: String,
 }
+
+
+
 // // // // // // // // // // // // // // // //
+
+fn get_home_dir() -> PathBuf {
+    let mut home_dir = dirs::home_dir().expect("unable to find home dir!");
+    home_dir.push("/config/distroshop/distros.json");
+    home_dir
+}
+
 fn get_local_distro_list() -> PathBuf {
-    let mut path = std::env::temp_dir();
+    let mut path = get_home_dir();
     path.push("distros.json");
     path
 }
