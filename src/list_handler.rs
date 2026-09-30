@@ -15,6 +15,7 @@ pub struct distro {
     pub description: String,
     pub descriptionfull: String,
     pub image: String,
+    pub downloadlink: String,
     pub filename: String,
 }
 

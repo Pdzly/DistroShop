@@ -5,5 +5,6 @@
     "description": "test",
     "descriptionfull": "test123",
     "image": "https://www.pikpng.com/transpng/iRhTJbh/",
-    "filename": "https://mirror.telepoint.bg/archlinux/iso/2026.09.01/archlinux-x86_64.iso"
+    "downloadlink": "https://mirror.telepoint.bg/archlinux/iso/2026.09.01/archlinux-x86_64.iso",
+    "filename": "archlinux-X86_64.iso"
   }
