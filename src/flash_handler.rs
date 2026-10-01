@@ -1,8 +1,10 @@
-use crate::list_handler;
+use crate::list_handler::{self, get_config_dir};
 use dioxus::prelude::*;
 use std::fs::File;
+use std::fs;
 use std::io;
 use std::io::{Read, Write};
+use std::path::PathBuf;
 use nix::unistd::Uid;
 use std::env;
 use std::os::unix::process::CommandExt;
@@ -10,7 +12,44 @@ use std::process::Command;
 
 static CSS: Asset = asset!("/assets/main.css");
 
+#[component]
+ fn form_handler(distro: list_handler::distro) -> Element {
+    let mut blockdev = use_signal(String::new);
+    let on_submit = move |_evt: Event<FormData>| {
+        download_and_flash_handler(&distro, &blockdev.to_string());
+    };
+    rsx! {
+        form { onsubmit: on_submit,
+            label {"Target Block Device (e.g. /dev/sdb)"}
+            input {
+                value: "{blockdev}",
+                oninput: move |evt| blockdev.set(evt.value()),
+            }
+            button { r#type: "submit", "Confirm" }
+        }
+    }
+}
 
+async fn download_and_flash_handler(distro: &list_handler::distro, blockdev: &String) {
+    let distro = distro.clone();
+    if let Ok(()) = download_distro(&distro).await {
+        todo!{}
+    }
+
+}
+
+async fn download_distro(distro: &list_handler::distro) -> Result<(), Box<dyn std::error::Error>> {
+    let distro= distro.clone();
+    let response = reqwest::get(distro.downloadlink).await?;
+    let mut file_path = PathBuf::from(get_config_dir());
+    fs::create_dir_all(&file_path)?; // already creating if list isnt found but may be an edge case; flash_handler/ln86
+    file_path.push(distro.filename);
+
+    let contents = response.bytes().await?;
+    fs::write(file_path, contents)?;
+
+    Ok(())
+}
 
 pub fn flasher(blockdev: &str, isoimg: &str, flashmode: &str) -> io::Result<()> {
 
@@ -51,6 +90,8 @@ pub fn flasher(blockdev: &str, isoimg: &str, flashmode: &str) -> io::Result<()> 
 }
 #[component]
 pub fn show_more(distro: list_handler::distro, is_showing: Signal<bool>) -> Element {
+    let mut show_form = use_signal(|| false);
+
     rsx! {
         document::Stylesheet { href: CSS }
         div { style: "position: absolute; width: 100vw; height: 100vh; overflow: hidden;",
@@ -89,7 +130,10 @@ pub fn show_more(distro: list_handler::distro, is_showing: Signal<bool>) -> Elem
                 }
                 h1 { "{distro.name}" }
                 p { class: "center", "{distro.descriptionfull}" }
-                button { "download and flash" }
+                if show_form() {
+                    form_handler { distro: distro.clone() }
+                }
+                button { onclick: move |_| show_form.set(true), "download and flash" }
             }
         }
     }
