@@ -13,29 +13,45 @@ use std::process::Command;
 static CSS: Asset = asset!("/assets/main.css");
 
 #[component]
- fn form_handler(distro: list_handler::distro) -> Element {
+ fn form_handler(distro: list_handler::distro, show_form: Signal<bool>) -> Element {
     let mut blockdev = use_signal(String::new);
+    let mut selected = use_signal(|| "safe".to_string());
+
     let on_submit = move |_evt: Event<FormData>| {
-        download_and_flash_handler(&distro, &blockdev.to_string());
+        show_form.set(false);
+        download_and_flash_handler(&distro, &blockdev.to_string(), selected.to_string());
     };
     rsx! {
+
         form { onsubmit: on_submit,
             label {"Target Block Device (e.g. /dev/sdb)"}
             input {
                 value: "{blockdev}",
                 oninput: move |evt| blockdev.set(evt.value()),
             }
+            select {
+                value: "{selected}",
+                onchange: move |evt| selected.set(evt.value()),
+                option {value: "fast", "Fast"}
+                option {value: "safe", "Safe"}
+            }
+            p {"Selected: {selected}"}
             button { r#type: "submit", "Confirm" }
         }
     }
 }
 
-async fn download_and_flash_handler(distro: &list_handler::distro, blockdev: &String) {
-    let distro = distro.clone();
-    if let Ok(()) = download_distro(&distro).await {
-        todo!{}
-    }
-
+ fn download_and_flash_handler(
+    distro: &list_handler::distro,
+    blockdev: &String,
+    flashmode: String,
+) -> Result<(), Box<dyn std::error::Error>> 
+{
+    let distro_for_download = distro.clone();
+    let status = use_signal(|| "Downloading. This may take a while...");
+    spawn(async move { download_distro(&distro_for_download).await; });
+    flasher(blockdev, &distro.filename, &flashmode)?;
+    Ok(())
 }
 
 async fn download_distro(distro: &list_handler::distro) -> Result<(), Box<dyn std::error::Error>> {
@@ -91,7 +107,14 @@ pub fn flasher(blockdev: &str, isoimg: &str, flashmode: &str) -> io::Result<()> 
 #[component]
 pub fn show_more(distro: list_handler::distro, is_showing: Signal<bool>) -> Element {
     let mut show_form = use_signal(|| false);
-
+    let mut show_button = use_signal(|| true);
+    let back_button_handler = move |_: MouseEvent| {
+        if show_form(){
+            show_form.set(false);
+        } else if  show_button() {
+            is_showing.set(false);
+        }
+    };
     rsx! {
         document::Stylesheet { href: CSS }
         div { style: "position: absolute; width: 100vw; height: 100vh; overflow: hidden;",
@@ -122,7 +145,7 @@ pub fn show_more(distro: list_handler::distro, is_showing: Signal<bool>) -> Elem
                     border-radius: 8px;
                     box-shadow: 0 10px 25px rgba(0,0,0,0.5);
                 ",
-                button { onclick: move |_| is_showing.set(false), "back" }
+                button { onclick: back_button_handler, "back" }
                 img {
                     class: "center",
                     style: "max-width:100px; max-height:100px; width: auto; height:auto; ",
@@ -131,9 +154,10 @@ pub fn show_more(distro: list_handler::distro, is_showing: Signal<bool>) -> Elem
                 h1 { "{distro.name}" }
                 p { class: "center", "{distro.descriptionfull}" }
                 if show_form() {
-                    form_handler { distro: distro.clone() }
+                    form_handler { distro: distro.clone(), show_form: show_form }
+                } else {
+                    button { onclick: move |_| show_form.set(true), "download and flash" }
                 }
-                button { onclick: move |_| show_form.set(true), "download and flash" }
             }
         }
     }
