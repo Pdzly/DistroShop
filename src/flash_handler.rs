@@ -1,4 +1,5 @@
 use crate::list_handler::{self, get_config_dir};
+use dioxus::core::spawn_forever;
 use dioxus::prelude::*;
 use std::fs::File;
 use std::fs;
@@ -7,7 +8,6 @@ use std::io::{Read, Write};
 use std::path::PathBuf;
 use nix::unistd::Uid;
 use std::env;
-use std::os::unix::process::CommandExt;
 use std::process::Command;
 use std::time::Duration;
 use tokio::time;
@@ -54,33 +54,48 @@ static CSS: Asset = asset!("/assets/main.css");
 {
     let distro_to_download = distro.clone();
     let blockdev_for_flash = blockdev.to_string();
-    let iso_filename = distro.filename.clone();
+    let mut iso_filename = get_config_dir().to_string_lossy().into_owned();
+    iso_filename.push_str(&distro.filename);
     let flashmode_for_flash = flashmode.clone();
 
-    status.set("Downloading iso image...".to_string());
-    spawn(async move {
-        if download_distro(&distro_to_download).await.is_ok() {
-            status.set("Flashing to block device...".to_string());
-            if let Ok(()) = flasher(&blockdev_for_flash, &iso_filename, &flashmode_for_flash){
-                status.set("Successfully flashed iso image!".to_string());
-                time::sleep(Duration::from_secs(2)).await;
-                status.set("".to_string());
+    
+        spawn_forever(async move {
+
+            status.set("Downloading iso image (will take a while)".to_string());
+            match download_distro(&distro_to_download).await {
+             Ok(_) => {
+                status.set("Flashing to block device (ui might freeze and that's normal)".to_string());
+                tokio::time::sleep(Duration::from_millis(200)).await;
+                match flasher(&blockdev_for_flash, &iso_filename, &flashmode_for_flash) {
+                    Ok(()) => {
+                        status.set("Successfully flashed iso image!".to_string());
+                        time::sleep(Duration::from_secs(2)).await;
+                        status.set("".to_string());
+                    }
+                    Err(e) => status.set(format!("Flashing failed: {e}")),
+                }
             }
-        }
-    });
+        Err(e) => status.set(format!("Download failed: {e}")),
+            }
+        });
 
     Ok(())
 }
 
 async fn download_distro(distro: &list_handler::distro) -> Result<(), Box<dyn std::error::Error>> {
     let distro= distro.clone();
-    let response = reqwest::get(distro.downloadlink).await?;
+    info!{"requesting {}", distro.downloadlink};
+    let response = reqwest::get(distro.downloadlink).await?.error_for_status()?;
+    info!("got headers: {} len={:?}", response.status(), response.content_length());
+
     let mut file_path = PathBuf::from(get_config_dir());
     fs::create_dir_all(&file_path)?; // already creating if list isnt found but may be an edge case; flash_handler/ln86
     file_path.push(distro.filename);
 
     let contents = response.bytes().await?;
-    fs::write(file_path, contents)?;
+    info!("got body: {} bytes", contents.len());
+    fs::write(&file_path, contents)?;
+    info!("wrote {:?}", file_path);
 
     Ok(())
 }
@@ -111,21 +126,27 @@ pub fn flasher(blockdev: &str, isoimg: &str, flashmode: &str) -> io::Result<()> 
         }
     }
  } else {
-    let exe_path = env::current_exe().expect("failed to read /proc/self/exe");
-    let err = Command::new("pkexec")
+    let exe_path = env::current_exe()?;
+    let status = Command::new("pkexec")
     .arg(&exe_path)
     .arg("-f")
     .args(&args) 
-    .exec();
-    eprintln!("failed to exec pkexec: {err}");
-    std::process::exit(1); 
+    .status()?;
+    
+    if !status.success() {
+        return Err(io::Error::new(
+            io::ErrorKind::Other,
+            format!("pkexec exited with {status}")
+        ));
+    }
+
  }
     Ok(())
 }
 #[component]
 pub fn show_more(distro: list_handler::distro, is_showing: Signal<bool>) -> Element {
     let mut show_form = use_signal(|| false);
-    let mut status = use_signal(|| "".to_string());
+    let  status = use_signal(|| "".to_string());
     let back_button_handler = move |_: MouseEvent| {
         if show_form(){
             show_form.set(false);
@@ -172,7 +193,7 @@ pub fn show_more(distro: list_handler::distro, is_showing: Signal<bool>) -> Elem
                 h1 { style: "text-align:center; margin: auto",
                 "{distro.name}" }
                 p { class: "center", "{distro.descriptionfull}" }
-                h1 {"{status}"}
+                h3 {class: "center", "{status}"}
                 if show_form() {
                     form_handler { distro: distro.clone(), show_form: show_form,status: status, }
                 } else {
