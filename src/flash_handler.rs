@@ -14,7 +14,8 @@ use tokio::time;
 static CSS: Asset = asset!("/assets/main.css");
 
 #[component]
- fn form_handler(distro: list_handler::distro, show_form: Signal<bool>, mut status: Signal<String>) -> Element {
+ fn form_handler(distro: list_handler::distro, show_form: Signal<bool>, mut status: Signal<String>, mut show_button: Signal<bool>) -> Element {
+    show_button.set(false);
     let mut blockdev = use_signal(String::new);
     let mut selected = use_signal(|| "safe".to_string());
 
@@ -70,7 +71,7 @@ static CSS: Asset = asset!("/assets/main.css");
     
         spawn_forever(async move {
 
-            status.set("Downloading iso image (will take a while)".to_string());
+            status.set("Downloading iso image... (will take a while)".to_string());
             match download_distro(&distro_to_download).await {
              Ok(_) => {
                 status.set("Flashing to block device (ui might freeze and that's normal)".to_string()); //can't be unintended behavior if bugs are intended
@@ -155,10 +156,12 @@ pub fn flasher(blockdev: &str, isoimg: &str, flashmode: &str) -> io::Result<()> 
 #[component]
 pub fn show_more(distro: list_handler::distro, is_showing: Signal<bool>) -> Element {
     let mut show_form = use_signal(|| false);
+    let mut show_button = use_signal(|| true);
     let  status = use_signal(|| "".to_string());
     let back_button_handler = move |_: MouseEvent| {
         if show_form(){
             show_form.set(false);
+            show_button.set(true);
         } else {
             is_showing.set(false);
         }
@@ -178,11 +181,11 @@ pub fn show_more(distro: list_handler::distro, is_showing: Signal<bool>) -> Elem
                     }
                     p { class: "modal-description center", "{distro.descriptionfull}" }
                     h3 { class: "modal-status center", "{status}" }
-                    if show_form() {
-                        form_handler { distro: distro.clone(), show_form: show_form,status: status, }
-                    } else {
+                    if show_form()  {
+                        form_handler { distro: distro.clone(), show_form: show_form,status: status, show_button: show_button, }
+                    } else if show_button() {
                         div { class: "form-actions",
-                            button { class: "primary-button center", onclick: move |_| show_form.set(true), "Download and flash" }
+                            button { class: "primary-button center",onclick: move |_| show_form.set(true), "Download and flash" }
                         }
                     }
                 }

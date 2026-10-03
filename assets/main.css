@@ -1,13 +1,13 @@
 :root {
     --page: #232629;
-    --surface: #31363b;
-    --surface-hover: #3b4045;
+    --surface: #2b2f33;
+    --surface-hover: #343a40;
     --text: #eff0f1;
     --text-muted: #bdc3c7;
-    --border: #4d5359;
+    --border: #4d5258;
     --accent: #3daee9;
-    --accent-hover: #54b8eb;
-    --focus: rgba(61, 174, 233, 0.4);
+    --accent-hover: #2a9bd6;
+    --focus: rgba(61, 174, 233, 0.35);
 }
 
 * {
@@ -105,13 +105,13 @@ select:focus-visible {
 }
 
 .primary-button {
-    border-color: #3daee9;
+    border-color: #2492c8;
     background: var(--accent);
     color: #fff;
 }
 
 .primary-button:hover:not(:disabled) {
-    border-color: #54b8eb;
+    border-color: #1d85b8;
     background: var(--accent-hover);
 }
 
@@ -215,7 +215,7 @@ select:focus-visible {
     position: fixed;
     inset: 0;
     z-index: 15;
-    background: rgba(0, 0, 0, 0.68);
+    background: rgba(0, 0, 0, 0.58);
 }
 
 .modal-panel {
@@ -277,7 +277,7 @@ select:focus-visible {
     padding: 16px;
     border: 1px solid var(--border);
     border-radius: 5px;
-    background: #292c30;
+    background: #25292d;
 }
 
 .form-field {
@@ -294,14 +294,23 @@ select:focus-visible {
 .form-select {
     width: 100%;
     padding: 0.65rem 0.75rem;
-    border: 1px solid #626a71;
+    border: 1px solid #62676b;
     border-radius: 4px;
-    background: var(--surface);
+    background-color: #25292d;
     color: var(--text);
 }
 
+.form-select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 2.25rem; /*all this just for the drop down to not be white son im crine*/
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path fill='white' d='M2 4l4 4 4-4z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+}
+
 .form-select option {
-    background: var(--surface);
+    background-color: #1f2326;
     color: var(--text);
 }
 
