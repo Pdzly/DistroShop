@@ -11,7 +11,7 @@ use std::env;
 use std::process::Command;
 use std::time::Duration;
 use tokio::time;
-static CSS: Asset = asset!("/assets/main.css");
+static CSS: &str = include_str!("../assets/main.css");
 
 #[component]
  fn form_handler(distro: list_handler::distro, show_form: Signal<bool>, mut status: Signal<String>, mut show_button: Signal<bool>) -> Element {
@@ -167,7 +167,7 @@ pub fn show_more(distro: list_handler::distro, is_showing: Signal<bool>) -> Elem
         }
     };
     rsx! {
-        document::Stylesheet { href: CSS }
+        document::Style { "{CSS}" }
         div { class: "modal-overlay",
             div { class: "modal-panel",
                 div { class: "modal-header",

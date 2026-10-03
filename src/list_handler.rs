@@ -6,7 +6,7 @@ use std::fs;
 use std::path::PathBuf;
 const DISTROLISTGITHUB: &str =
     "https://raw.githubusercontent.com/TechCore3/DistroShop/refs/heads/main/assets/distros.json";
-static CSS: Asset = asset!("/assets/main.css");
+static CSS: &str = include_str!("../assets/main.css");
 
 #[derive(Deserialize, Clone, PartialEq)]
 pub struct distro {
@@ -122,7 +122,7 @@ pub fn distro_list() -> Element {
     };
     let distros = items_signal.read();
     rsx! {
-        document::Stylesheet { href: CSS }
+        document::Style { "{CSS}" }
         div { class: "app-shell",
             div { class: "toolbar",
                 div { class: "toolbar-copy",
