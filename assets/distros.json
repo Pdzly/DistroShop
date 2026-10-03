@@ -3,18 +3,18 @@
     "id": 0,
     "name": "arch linux",
     "description": "A complex distro for intermediates",
-    "descriptionfull": "Arch Linux is an independent, lightweight Linux distribution designed for experienced users who want full control over their operating system. Built around a 'Do It Yourself' philosophy and a rolling-release model, it provides a minimal base system, allowing you to install and configure only the exact components and software you need.",
+    "descriptionfull": "Arch Linux is a lightweight, rolling-release distribution for experienced users who want full control. It ships a minimal base system, so you install only the components you need.",
     "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fcdn0.iconfinder.com%2Fdata%2Ficons%2Fflat-round-system%2F512%2Farchlinux-512.png",
     "downloadlink": "https://mirror.telepoint.bg/archlinux/iso/2026.09.01/archlinux-x86_64.iso",
     "filename": "archlinux-X86_64.iso"
   },
   {
-  "id": 1,
-  "name": "tiny core linux",
-  "description": "An ultra-light distro that runs entirely from RAM",
-  "descriptionfull": "Tiny Core Linux is a minimalist, highly modular Linux distribution that weighs in at only about 25 MB. It boots entirely into RAM, so it runs extremely fast even on very old or low-powered hardware. The base system includes only a kernel and a basic desktop, and you add extra software on demand as extensions, which makes it ideal for people who want to build their system up from almost nothing.",
-  "image": "https://linuxbasecamp.com/storage/logos/distros/tiny-core-linux.png",
-  "downloadlink": "http://tinycorelinux.net/17.x/x86/release/Core-current.iso",
-  "filename": "TinyCore-current.iso"
-}
+    "id": 1,
+    "name": "tiny core linux",
+    "description": "An ultra-light distro that runs entirely from RAM",
+    "descriptionfull": "Tiny Core Linux is a minimalist, modular distribution of only about 25 MB. It boots entirely into RAM, running fast even on old hardware, and you add software on demand as extensions.",
+    "image": "https://linuxbasecamp.com/storage/logos/distros/tiny-core-linux.png",
+    "downloadlink": "http://tinycorelinux.net/17.x/x86/release/Core-current.iso",
+    "filename": "TinyCore-current.iso"
+  }
 ]
