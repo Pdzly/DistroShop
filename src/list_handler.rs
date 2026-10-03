@@ -123,36 +123,50 @@ pub fn distro_list() -> Element {
     let distros = items_signal.read();
     rsx! {
         document::Stylesheet { href: CSS }
-        div {button { onclick: handle_manual_sync, disabled: is_loading(),
-                if is_loading() {
-                    "Syncing..."
-                } else {
-                    "Refresh"
+        div { class: "app-shell",
+            div { class: "toolbar",
+                div { class: "toolbar-copy",
+                    h1 { class: "app-title", "DistroShop" }
+                }
+                div { class: "toolbar-actions",
+                    button { class: "primary-button", onclick: handle_manual_sync, disabled: is_loading(),
+                        if is_loading() {
+                            "Syncing..."
+                        } else {
+                            "Refresh list"
+                        }
+                    }
                 }
             }
-            p { "{status_signal}" }
-        }
-        div {
-            id: "distrolist",
-            style: "display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; list-style-type: none; padding:0;",
-            for distro in distros.iter().cloned().collect::<Vec<_>>() {
-                li { style: "border: 3px solid #7a7a7a;",
-                    img {
-                        style: "max-width:100px; max-height:100px; width: auto; height:auto;",
-                        src: "{distro.image}",
+            p { class: "status-line", "{status_signal}" }
+            div {
+                id: "distrolist",
+                for distro in distros.iter().cloned().collect::<Vec<_>>() {
+                    li { class: "distro-card",
+                        div { class: "distro-image-frame",
+                            img {
+                                class: "distro-image",
+                                src: "{distro.image}",
+                            }
+                        }
+                        div { class: "distro-details",
+                            h3 { class: "distro-title", "{distro.name}" }
+                            p { class: "distro-description", "{distro.description}" }
+                        }
+                        div { class: "distro-actions",
+                            button {
+                                class: "distro-button",
+                                onclick: move |_| {
+                                    active_distro_id.set(Some(distro.id));
+                                    is_showing_more.set(true);
+                                },
+                                "Show more"
+                            }
+                        }
                     }
-                    h3 { "{distro.name}" }
-                    p { "{distro.description}" }
-                    button {
-                        onclick: move |_| {
-                            active_distro_id.set(Some(distro.id));
-                            is_showing_more.set(true);
-                        },
-                        "show more"
+                    if active_distro_id() == Some(distro.id) && is_showing_more() {
+                        flash_handler::show_more { distro: distro.clone(), is_showing: is_showing_more }
                     }
-                }
-                if active_distro_id() == Some(distro.id) && is_showing_more() {
-                    flash_handler::show_more { distro: distro.clone(), is_showing: is_showing_more }
                 }
             }
         }
