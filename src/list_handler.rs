@@ -123,8 +123,7 @@ pub fn distro_list() -> Element {
     let distros = items_signal.read();
     rsx! {
         document::Stylesheet { href: CSS }
-        div { class: "strokeme",
-            button { onclick: handle_manual_sync, disabled: is_loading(),
+        div {button { onclick: handle_manual_sync, disabled: is_loading(),
                 if is_loading() {
                     "Syncing..."
                 } else {

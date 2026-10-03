@@ -9,17 +9,22 @@ use nix::unistd::Uid;
 use std::env;
 use std::os::unix::process::CommandExt;
 use std::process::Command;
-
+use std::time::Duration;
+use tokio::time;
 static CSS: Asset = asset!("/assets/main.css");
 
 #[component]
- fn form_handler(distro: list_handler::distro, show_form: Signal<bool>) -> Element {
+ fn form_handler(distro: list_handler::distro, show_form: Signal<bool>, mut status: Signal<String>) -> Element {
     let mut blockdev = use_signal(String::new);
     let mut selected = use_signal(|| "safe".to_string());
 
     let on_submit = move |_evt: Event<FormData>| {
-        show_form.set(false);
-        download_and_flash_handler(&distro, &blockdev.to_string(), selected.to_string());
+        if blockdev != use_signal(|| "".to_string()) { 
+            show_form.set(false);
+            download_and_flash_handler(&distro, &blockdev.to_string(), selected.to_string(), status).unwrap();
+        } else {
+            status.set("Please enter a valid device!".to_string());
+        }
     };
     rsx! {
 
@@ -35,7 +40,6 @@ static CSS: Asset = asset!("/assets/main.css");
                 option {value: "fast", "Fast"}
                 option {value: "safe", "Safe"}
             }
-            p {"Selected: {selected}"}
             button { r#type: "submit", "Confirm" }
         }
     }
@@ -45,12 +49,26 @@ static CSS: Asset = asset!("/assets/main.css");
     distro: &list_handler::distro,
     blockdev: &String,
     flashmode: String,
+    mut status: Signal<String>,
 ) -> Result<(), Box<dyn std::error::Error>> 
 {
-    let distro_for_download = distro.clone();
-    let status = use_signal(|| "Downloading. This may take a while...");
-    spawn(async move { download_distro(&distro_for_download).await; });
-    flasher(blockdev, &distro.filename, &flashmode)?;
+    let distro_to_download = distro.clone();
+    let blockdev_for_flash = blockdev.to_string();
+    let iso_filename = distro.filename.clone();
+    let flashmode_for_flash = flashmode.clone();
+
+    status.set("Downloading iso image...".to_string());
+    spawn(async move {
+        if download_distro(&distro_to_download).await.is_ok() {
+            status.set("Flashing to block device...".to_string());
+            if let Ok(()) = flasher(&blockdev_for_flash, &iso_filename, &flashmode_for_flash){
+                status.set("Successfully flashed iso image!".to_string());
+                time::sleep(Duration::from_secs(2)).await;
+                status.set("".to_string());
+            }
+        }
+    });
+
     Ok(())
 }
 
@@ -102,16 +120,16 @@ pub fn flasher(blockdev: &str, isoimg: &str, flashmode: &str) -> io::Result<()> 
     eprintln!("failed to exec pkexec: {err}");
     std::process::exit(1); 
  }
-    Ok(()) //unreachable but needed for previous '?' operators
+    Ok(())
 }
 #[component]
 pub fn show_more(distro: list_handler::distro, is_showing: Signal<bool>) -> Element {
     let mut show_form = use_signal(|| false);
-    let mut show_button = use_signal(|| true);
+    let mut status = use_signal(|| "".to_string());
     let back_button_handler = move |_: MouseEvent| {
         if show_form(){
             show_form.set(false);
-        } else if  show_button() {
+        } else {
             is_showing.set(false);
         }
     };
@@ -151,12 +169,14 @@ pub fn show_more(distro: list_handler::distro, is_showing: Signal<bool>) -> Elem
                     style: "max-width:100px; max-height:100px; width: auto; height:auto; ",
                     src: "{distro.image}",
                 }
-                h1 { "{distro.name}" }
+                h1 { style: "text-align:center; margin: auto",
+                "{distro.name}" }
                 p { class: "center", "{distro.descriptionfull}" }
+                h1 {"{status}"}
                 if show_form() {
-                    form_handler { distro: distro.clone(), show_form: show_form }
+                    form_handler { distro: distro.clone(), show_form: show_form,status: status, }
                 } else {
-                    button { onclick: move |_| show_form.set(true), "download and flash" }
+                    button { onclick: move |_| show_form.set(true), style: "text-align: center; margin: auto", "download and flash" }
                 }
             }
         }
