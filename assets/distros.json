@@ -2,7 +2,6 @@
   {
     "id": 0,
     "name": "arch linux",
-    "category": "intermediate to advanced",
     "description": "A complex distro for intermediates",
     "descriptionfull": "Arch Linux is a lightweight, rolling-release distribution for experienced users who want full control. It ships a minimal base system, so you install only the components you need.",
     "image": "https://cdn.simpleicons.org/archlinux",
@@ -12,7 +11,6 @@
   {
     "id": 1,
     "name": "tiny core linux",
-    "category": "use case specific",
     "description": "An ultra-light distro that runs entirely from RAM",
     "descriptionfull": "Tiny Core Linux is a minimalist, modular distribution of only about 25 MB. It boots entirely into RAM, running fast even on old hardware, and you add software on demand as extensions.",
     "image": "https://linuxbasecamp.com/storage/logos/distros/tiny-core-linux.png",
@@ -22,7 +20,6 @@
   {
     "id": 2,
     "name": "linux mint",
-    "category": "easy to use",
     "description": "A friendly, polished distro for beginners",
     "descriptionfull": "Linux Mint 22.3 is an Ubuntu-based distribution focused on being familiar and easy to use. Its Cinnamon desktop has a traditional layout, and multimedia codecs work out of the box.",
     "image": "https://cdn.simpleicons.org/linuxmint",
@@ -32,7 +29,6 @@
   {
     "id": 3,
     "name": "ubuntu",
-    "category": "easy to use",
     "description": "The most popular beginner-friendly distro",
     "descriptionfull": "Ubuntu 26.04 LTS is a Debian-based distribution backed by Canonical, with a huge community and extensive documentation. This long-term support release gets five years of updates and ships with GNOME.",
     "image": "https://cdn.simpleicons.org/ubuntu",
@@ -42,7 +38,6 @@
   {
     "id": 4,
     "name": "debian",
-    "category": "intermediate to advanced",
     "description": "A rock-solid, stable universal operating system",
     "descriptionfull": "Debian 13 \"Trixie\" is one of the oldest and most influential distributions, known for stability and a strong commitment to free software. This small netinst image downloads the rest of the system during installation, so it needs an internet connection.",
     "image": "https://cdn.simpleicons.org/debian",
@@ -52,7 +47,6 @@
   {
     "id": 5,
     "name": "fedora workstation",
-    "category": "easy to use",
     "description": "A modern distro with cutting-edge software",
     "descriptionfull": "Fedora Workstation 44 is a community distribution sponsored by Red Hat that ships recent software while staying stable. It uses GNOME by default and is a popular choice for developers.",
     "image": "https://cdn.simpleicons.org/fedora",
@@ -62,7 +56,6 @@
   {
     "id": 6,
     "name": "manjaro",
-    "category": "easy to use",
     "description": "Arch Linux made easy for everyday users",
     "descriptionfull": "Manjaro is built on Arch Linux but adds a graphical installer, automatic hardware detection and curated update branches. This KDE Plasma edition gives you Arch's rolling releases without the manual setup.",
     "image": "https://cdn.simpleicons.org/manjaro",
@@ -72,7 +65,6 @@
   {
     "id": 7,
     "name": "opensuse tumbleweed",
-    "category": "intermediate to advanced",
     "description": "A tested rolling release with powerful tools",
     "descriptionfull": "openSUSE Tumbleweed is a rolling-release distribution where every update passes automated testing before release. It includes YaST for system configuration and Btrfs snapshots for easy rollbacks.",
     "image": "https://cdn.simpleicons.org/opensuse",
@@ -82,7 +74,6 @@
   {
     "id": 8,
     "name": "kali linux",
-    "category": "use case specific",
     "description": "A security-focused distro for penetration testing",
     "descriptionfull": "Kali Linux is a Debian-based distribution packed with hundreds of tools for security research, penetration testing and digital forensics. It is meant for professionals and learners, not as a daily desktop.",
     "image": "https://cdn.simpleicons.org/kalilinux",
@@ -92,7 +83,6 @@
   {
     "id": 9,
     "name": "alpine linux",
-    "category": "use case specific",
     "description": "A tiny, security-oriented distro for containers",
     "descriptionfull": "Alpine Linux is built around musl libc and BusyBox, giving it a very small footprint of a few hundred megabytes. It is a favorite base for Docker images, routers and lightweight servers.",
     "image": "https://cdn.simpleicons.org/alpinelinux",
@@ -102,7 +92,6 @@
   {
     "id": 10,
     "name": "gentoo",
-    "category": "intermediate to advanced",
     "description": "A source-based distro for maximum customization",
     "descriptionfull": "Gentoo compiles software from source using its Portage package manager, letting you tune every part of the system for your hardware and needs. It has a steep learning curve but offers unmatched flexibility.",
     "image": "https://cdn.simpleicons.org/gentoo",
@@ -112,7 +101,6 @@
   {
     "id": 11,
     "name": "nixos",
-    "category": "intermediate to advanced",
     "description": "A declarative distro configured with code",
     "descriptionfull": "NixOS lets you describe your entire system in a single configuration file, making setups reproducible and easy to roll back. It is ideal for people who like treating their OS like code.",
     "image": "https://cdn.simpleicons.org/nixos",

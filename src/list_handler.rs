@@ -17,7 +17,6 @@ pub struct distro {
     pub image: String,
     pub downloadlink: String,
     pub filename: String,
-    pub category: String,
 }
 
 
@@ -140,21 +139,11 @@ pub fn distro_list() -> Element {
                 }
             }
             p { class: "status-line", "{status_signal}" }
-            h1 {"easy to use"}
-            h1 {"intermediate to advance"}
-            h1 {"usecase specific"}
+            
             div {
                 id: "distrolist",
                 for distro in distros.iter().cloned().collect::<Vec<_>>() {
-                    if distro.category == "easy to use" {
-                        h1 { "easy to use" }
-                    }
-                    if distro.category == "intermediate to advanced" {
-                        h1 { "intermediate to advanced" }
-                    }
-                    if distro.category == "use case specific" {
-                        h1 { "use-case specific" }
-                    }
+                    
                     li { class: "distro-card",
                         div { class: "distro-image-frame",
                             img {
