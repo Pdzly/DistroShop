@@ -1499,6 +1499,7 @@ version = "0.1.0"
 dependencies = [
  "dioxus",
  "dirs 7.0.0",
+ "image",
  "libc",
  "nix",
  "reqwest 0.13.4",

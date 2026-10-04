@@ -10,7 +10,7 @@ use nix::unistd::Uid;
 use std::env;
 use std::process::Command;
 use std::time::Duration;
-use tokio::time;
+
 static CSS: &str = include_str!("../assets/main.css");
 
 #[component]
@@ -75,12 +75,10 @@ static CSS: &str = include_str!("../assets/main.css");
             match download_distro(&distro_to_download).await {
              Ok(_) => {
                 status.set("Flashing to block device (ui might freeze and that's normal)".to_string()); //can't be unintended behavior if bugs are intended
-                tokio::time::sleep(Duration::from_millis(200)).await;
+                tokio::time::sleep(Duration::from_millis(100)).await;
                 match flasher(&blockdev_for_flash, &iso_filename, &flashmode_for_flash) {
                     Ok(()) => {
                         status.set("Successfully flashed iso image!".to_string());
-                        time::sleep(Duration::from_secs(2)).await;
-                        status.set("".to_string());
                     }
                     Err(e) => status.set(format!("Flashing failed: {e}")),
                 }

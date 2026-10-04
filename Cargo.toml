@@ -9,6 +9,7 @@ edition = "2021"
 [dependencies]
 dioxus = { version = "0.7.1", features = [] }
 dirs = "7.0.0"
+image = "0.25.10"
 libc = "0.2.189"
 nix = { version = "0.31.3", features = ["user"] }
 reqwest = { version = "0.13.4", features = ["json"] }
