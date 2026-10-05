@@ -5,7 +5,7 @@ use dioxus::desktop::{Config, WindowBuilder};
 use dioxus::desktop::tao::window::Icon;
 use crate::list_handler::distro_list;
 
-pub mod flash_handler;
+pub mod flashing;
 pub mod list_handler;
 static CSS: &str = include_str!("../assets/main.css");
 
@@ -28,7 +28,11 @@ fn app() -> Element {
 fn main() -> io::Result<()> {
     let args: Vec<String> = env::args().collect();
     if args.len() > 1 {
-        flash_handler::flasher(&args[2], &args[3], &args[4])?;
+        #[cfg(any(target_os = "linux", target_os = "macos"))] 
+        flashing::flasher_unix::flasher(&args[2], &args[3], &args[4])?;
+        
+        #[cfg(target_os = "windows")]
+        flashing::flasher_win::flasher(&args[2], &args[3], &args[4])?;
     } else {
         dioxus::LaunchBuilder::desktop()
             .with_cfg(

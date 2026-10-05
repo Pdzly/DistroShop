@@ -1,28 +1,42 @@
 use crate::list_handler::{self, get_config_dir};
 use dioxus::core::spawn_forever;
 use dioxus::prelude::*;
-use std::fs::File;
-use std::fs;
-use std::io;
-use std::io::{Read, Write};
-use std::path::PathBuf;
-use nix::unistd::Uid;
-use std::env;
-use std::process::Command;
-use std::time::Duration;
 
-static CSS: &str = include_str!("../assets/main.css");
+use std::fs;
+
+use std::path::PathBuf;
+use std::time::Duration;
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+use crate::flashing::flasher_unix;
+#[cfg(target_os = "windows")]
+use crate::flashing::flasher_win;
+static CSS: &str = include_str!("../../assets/main.css");
 
 #[component]
- fn form_handler(distro: list_handler::distro, show_form: Signal<bool>, mut status: Signal<String>, mut show_button: Signal<bool>) -> Element {
+fn form_handler(distro: list_handler::distro, show_form: Signal<bool>, mut status: Signal<String>, mut show_button: Signal<bool>) -> Element {
     show_button.set(false);
     let mut blockdev = use_signal(String::new);
     let mut selected = use_signal(|| "safe".to_string());
 
+    let device_label = {
+        #[cfg(target_os = "macos")]
+        {
+            "Target Block Device (e.g. /dev/diskb)"
+        }
+        #[cfg(target_os = "linux")]
+        {
+            "Target Block Device (e.g. /dev/sdb)"
+        }
+        #[cfg(target_os = "windows")]
+        {
+            "Target Drive (e.g. D )"
+        }
+    };
+
     let on_submit = move |_evt: Event<FormData>| {
-        if blockdev != use_signal(|| "".to_string()) { 
+        if !blockdev.read().is_empty() {
             show_form.set(false);
-            download_and_flash_handler(&distro, &blockdev.to_string(), selected.to_string(), status).unwrap();
+            download_and_flash_handler(&distro, &blockdev.read().clone(), selected(), status).unwrap();
         } else {
             status.set("Please enter a valid device!".to_string());
         }
@@ -31,7 +45,7 @@ static CSS: &str = include_str!("../assets/main.css");
 
         form { class: "modal-form", onsubmit: on_submit,
             div { class: "form-field",
-                label { class: "form-label", "Target Block Device (e.g. /dev/sdb)" }
+                label { class: "form-label", "{device_label}" }
                 input {
                     class: "form-input",
                     value: "{blockdev}",
@@ -76,11 +90,19 @@ static CSS: &str = include_str!("../assets/main.css");
              Ok(_) => {
                 status.set("Flashing to block device (ui might freeze and that's normal)".to_string()); //can't be unintended behavior if bugs are intended
                 tokio::time::sleep(Duration::from_millis(100)).await;
-                match flasher(&blockdev_for_flash, &iso_filename, &flashmode_for_flash) {
+                #[cfg(any(target_os = "linux", target_os = "macos"))] 
+                match flasher_unix::flasher(&blockdev_for_flash, &iso_filename, &flashmode_for_flash) {
                     Ok(()) => {
                         status.set("Successfully flashed iso image!".to_string());
                     }
                     Err(e) => status.set(format!("Flashing failed: {e}")),
+                }
+                #[cfg(target_os = "windows")]
+                match flasher_win::flasher(&blockdev_for_flash, &iso_filename, &flashmode_for_flash) {
+                Ok(()) => {
+                    status.set("Successfully flashed iso image!".to_string());
+                }
+                Err(e) => status.set(format!("Flashing failed: {e}")),
                 }
             }
         Err(e) => status.set(format!("Download failed: {e}")),
@@ -108,49 +130,7 @@ async fn download_distro(distro: &list_handler::distro) -> Result<(), Box<dyn st
     Ok(())
 }
 
-pub fn flasher(blockdev: &str, isoimg: &str, flashmode: &str) -> io::Result<()> {
 
-    let args = vec![blockdev, isoimg, flashmode]; //the original arguments get shadowed later 
-
-    if Uid::current().is_root(){
-    let mut blockdev = File::options().write(true).open(&blockdev)?;
-    let mut isoimg = File::open(&isoimg)?;
-    match flashmode {
-        "safe" => {
-            info!("using safe mode");
-            io::copy(&mut isoimg, &mut blockdev)?;
-            blockdev.sync_all()?;
-        }
-        "fast" => {
-            info!("using fast mode");
-            let mut buffer = Vec::new();
-            isoimg.read_to_end(&mut buffer)?;
-            blockdev.write_all(&buffer)?;
-            blockdev.sync_all()?;
-        }
-        _ => {
-            error!("invalid flash mode");
-            std::process::exit(1);
-        }
-    }
- } else {
-    let exe_path = env::current_exe()?;
-    let status = Command::new("pkexec")
-    .arg(&exe_path)
-    .arg("-f")
-    .args(&args) 
-    .status()?;
-    
-    if !status.success() {
-        return Err(io::Error::new(
-            io::ErrorKind::Other,
-            format!("pkexec exited with {status}")
-        ));
-    }
-
- }
-    Ok(())
-}
 #[component]
 pub fn show_more(distro: list_handler::distro, is_showing: Signal<bool>) -> Element {
     let mut show_form = use_signal(|| false);
