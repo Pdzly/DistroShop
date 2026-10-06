@@ -27,7 +27,7 @@ pub struct distro {
 
 pub fn get_config_dir() -> PathBuf {
     let mut home_dir = dirs::home_dir().expect("unable to find home dir!");
-    home_dir.push(".config/distroshop/");
+    home_dir.push(".config/distroshop/"); // %LOCALAPPDATA% be damned
     home_dir
 }
 

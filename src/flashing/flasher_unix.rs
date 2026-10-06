@@ -6,6 +6,17 @@ use std::process::Command;
 use std::fs::File;
 use dioxus::prelude::*;
 
+#[cfg(target_os = "macos")]
+fn run_mac_command(exe_path: &str, args: &str) -> std::io::Result<std::process::ExitStatus> {
+    let inner_cmd = format!("{} {}", exe_path, args).replace('\'', "'\\''");
+    
+    let script = format!("do shell script \"{}\" with administrator privileges", inner_cmd);
+
+    Command::new("osascript")
+        .arg("-e")
+        .arg(script)
+        .status()?
+}
 
 pub fn flasher(blockdev: &str, isoimg: &str, flashmode: &str) -> io::Result<()> {
 
@@ -35,20 +46,16 @@ pub fn flasher(blockdev: &str, isoimg: &str, flashmode: &str) -> io::Result<()> 
  } else {
     let exe_path = env::current_exe()?;
 
-    let mut exit_status = None;
-    std::thread::scope(|s| {
-        s.spawn(||{
-        let result = Command::new("pkexec") 
-            .arg(&exe_path)
-            .arg("-f")
-            .args(&args)
-            .status();
+    
+    #[cfg(target_os = "linux")]
+    let status = Command::new("pkexec") 
+        .arg(&exe_path)
+        .arg("-f")
+        .args(&args)
+        .status()?;
         
-        exit_status = Some(result);
-        });
-    }); //lol i spent like 20 minutes figuring threads out and it didnt fix the ui freezing
-
-    let status = exit_status.expect("Thread guaranteed to run and set status")?;
+    #[cfg(target_os = "macos")]
+    let status = run_mac_command(&exe_path, &args);
 
     if !status.success() {
         return Err(io::Error::new(
