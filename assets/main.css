@@ -16,7 +16,8 @@
 
 html,
 body {
-    min-height: 100%;
+    height: 100%;
+    overflow: hidden;
 }
 
 body {
@@ -49,17 +50,24 @@ select:focus-visible {
 }
 
 #root {
-    min-height: 100vh;
+    height: 100%;
+    overflow: hidden;
 }
 
 .app-shell {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
     max-width: 1120px;
     margin: 0 auto;
     padding: 36px 24px 56px;
+    overflow: hidden;
 }
 
 .toolbar {
     display: flex;
+    flex: none;
     justify-content: space-between;
     align-items: center;
     gap: 20px;
@@ -127,6 +135,7 @@ select:focus-visible {
 }
 
 .status-line {
+    flex: none;
     min-height: 1.4em;
     margin: 0 0 18px;
     color: var(--text-muted);
@@ -135,10 +144,14 @@ select:focus-visible {
 
 #distrolist {
     display: grid;
+    flex: 1;
+    min-height: 0;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    align-content: start;
     gap: 14px;
     margin: 0;
     padding: 0;
+    overflow-y: auto;
     list-style: none;
 }
 
