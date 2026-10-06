@@ -73,17 +73,18 @@ assets/
 
 ## Distro image cache
 
-Distro logos are downloaded from the `image` URL in the loaded `distros.json`; they are not bundled in the executable or selected by distro name.
+Distro logos are downloaded, never bundled as image bytes. The loaded catalog's `image` URL is always preferred. If it fails or does not return an image, DistroShop tries its optional `image_fallbacks` URLs, then the URLs in the release catalog for the same numeric ID and case-insensitive distro name. Duplicate URLs are tried only once per loading pass, apart from bounded retries for transient failures.
 
-- On first startup, missing images are downloaded and cached under `~/.config/distroshop/images/`.
-- Later startups reuse valid cached images without making image requests. Missing or corrupt entries, or entries whose catalog URL changed, are downloaded again.
-- **Refresh list** downloads the latest catalog and checks its image URLs for changes. ETag and Last-Modified validators avoid downloading unchanged images when the server supports them; otherwise the returned image content is compared with the cache.
-- Failed updates keep the last cached image and show a warning. If an image has never been cached, its frame stays empty until the URL becomes reachable.
-- The cards and details dialog use the same cached image. Each numeric distro ID has a cache entry containing the source URL, image data, and HTTP validators.
+- On first startup, missing images are downloaded and cached under `~/.config/distroshop/images/`. Each logo appears as soon as it is ready; a slow source does not hold up the other cards.
+- Later startups reuse valid cached images without making image requests, including images downloaded from alternate sources. The requested primary URL must still match and the actual source must remain an allowed candidate. Missing or corrupt entries, or entries whose preferred URL changed, are fetched again.
+- **Refresh list** downloads the latest catalog and checks the preferred image sources again before trying alternatives. ETag and Last-Modified validators are sent only to the URL that supplied the cached image. Existing images stay visible throughout refresh.
+- Requests have connection and overall timeouts. Transient failures get at most one retry per URL; permanent errors and non-image responses move directly to the next source.
+- If every source fails, the last cached image is retained and a warning is shown. A never-cached image stays empty when none of its sources is reachable. Successful alternatives are reported separately from failures.
+- Cards and details dialogs share the same cached image. Each numeric distro ID has a cache entry containing the requested primary URL, actual source URL, image data, and HTTP validators. Older cache entries remain readable.
 
-The application reads the cached catalog at `~/.config/distroshop/distros.json`, or fetches the upstream catalog when none is usable. Refresh also replaces that catalog, so changing the repository's `assets/distros.json` only affects remote refreshes after the updated catalog is published upstream.
+The application reads `~/.config/distroshop/distros.json`, or fetches the upstream catalog when none is usable. If neither is available, it shows release catalog metadata with a warning. Refresh replaces the cached catalog when successful and still refreshes displayed images if the catalog request fails.
 
-Only `assets/logo.png`, the application's own window icon, remains embedded at build time.
+`assets/distros.json` is embedded as URL/catalog metadata, so its alternate sources also work with older upstream catalogs. It does not override their preferred image URLs. The only embedded image remains `assets/logo.png`, the application's own window icon; no distro logo files are included.
 
 ### Licenses and trademarks
 
