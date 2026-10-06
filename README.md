@@ -11,7 +11,7 @@ This project is still early-stage, but the basic flow is there: it loads a distr
 - Lets you refresh the catalog manually
 - Displays each distro's image, summary, and full description
 - Uses responsive distro cards with consistent inner padding and bottom-aligned actions; cards grow to fit wrapped text
-- Keeps the title, refresh button, and status visible while only the distro-card area scrolls, including in small windows
+- Keeps the title, refresh button, and status visible while only the distro-card area scrolls, including in small windows, with compact bottom padding
 - Downloads the selected ISO
 - Flashes the ISO to a chosen block device
 - Offers a `safe` and `fast` flash mode (streaming the file little by little or loading the entire iso into memory and then writing to disk)

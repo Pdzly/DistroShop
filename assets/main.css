@@ -61,7 +61,7 @@ select:focus-visible {
     height: 100dvh;
     max-width: 1120px;
     margin: 0 auto;
-    padding: 36px 24px 56px;
+    padding: 36px 24px 12px;
     overflow: hidden;
 }
 
@@ -371,7 +371,7 @@ select:focus-visible {
 
 @media (max-width: 600px) {
     .app-shell {
-        padding: 24px 16px 40px;
+        padding: 24px 16px 12px;
     }
 
     .toolbar {
