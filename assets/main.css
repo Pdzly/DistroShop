@@ -153,19 +153,26 @@ select:focus-visible {
     background: var(--surface);
 }
 
-.distro-image-frame {
+.distro-image-frame,
+.modal-logo-frame {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 64px;
-    height: 64px;
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #fff;
+}
+
+.distro-image-frame {
+    width: 72px;
+    height: 72px;
 }
 
 .distro-image {
-    max-width: 56px;
-    max-height: 56px;
-    width: auto;
-    height: auto;
+    display: block;
+    width: 100%;
+    height: 100%;
     object-fit: contain;
 }
 
@@ -257,9 +264,11 @@ select:focus-visible {
     gap: 16px;
 }
 
-.modal-body .distro-image {
-    max-width: 72px;
-    max-height: 72px;
+.modal-logo-frame {
+    align-self: center;
+    width: 96px;
+    height: 96px;
+    padding: 10px;
 }
 
 .modal-description {

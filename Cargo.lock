@@ -1518,6 +1518,7 @@ dependencies = [
 name = "distro-shop"
 version = "0.1.0"
 dependencies = [
+ "base64",
  "dioxus",
  "dirs 7.0.0",
  "image",

@@ -150,7 +150,8 @@ pub fn distro_list() -> Element {
                         div { class: "distro-image-frame",
                             img {
                                 class: "distro-image",
-                                src: "{distro.image}",
+                                src: "{crate::logo_source::distro_logo_source(&distro.name, &distro.image)}",
+                                alt: "{distro.name} logo",
                             }
                         }
                         div { class: "distro-details",
