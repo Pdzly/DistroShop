@@ -154,10 +154,12 @@ pub fn show_more(distro: list_handler::distro, is_showing: Signal<bool>) -> Elem
                 }
                 div { class: "modal-body",
                     div { class: "modal-logo-frame",
-                        img {
-                            class: "distro-image",
-                            src: "{crate::logo_source::distro_logo_source(&distro.name, &distro.image)}",
-                            alt: "{distro.name} logo",
+                        if let Some(source) = &distro.logo_source {
+                            img {
+                                class: "distro-image",
+                                src: "{source}",
+                                alt: "{distro.name} logo",
+                            }
                         }
                     }
                     p { class: "modal-description center", "{distro.descriptionfull}" }

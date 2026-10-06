@@ -1,13 +1,20 @@
-
 use crate::flashing::flash_handler;
 use dioxus::prelude::*;
 use serde::Deserialize;
-use serde_json;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use std::sync::{Arc, LazyLock};
+use std::time::Duration;
+
 const DISTROLISTGITHUB: &str =
     "https://raw.githubusercontent.com/TechCore3/DistroShop/refs/heads/main/assets/distros.json";
 static CSS: &str = include_str!("../assets/main.css");
+static HTTP_CLIENT: LazyLock<reqwest::Client> = LazyLock::new(|| {
+    reqwest::Client::builder()
+        .timeout(Duration::from_secs(15))
+        .build()
+        .expect("failed to create HTTP client")
+});
 
 #[derive(Deserialize, Clone, PartialEq)]
 #[allow(non_camel_case_types)] // cant be bothered to change case at this point in development lol
@@ -19,11 +26,9 @@ pub struct distro {
     pub image: String,
     pub downloadlink: String,
     pub filename: String,
+    #[serde(skip)]
+    pub logo_source: Option<Arc<str>>,
 }
-
-
-
-// // // // // // // // // // // // // // // //
 
 pub fn get_config_dir() -> PathBuf {
     let mut home_dir = dirs::home_dir().expect("unable to find home dir!");
@@ -47,78 +52,153 @@ fn read_from_disk() -> Result<Vec<distro>, Box<dyn std::error::Error>> {
 }
 
 async fn download_and_save_list() -> Result<Vec<distro>, Box<dyn std::error::Error>> {
-    let response = reqwest::get(DISTROLISTGITHUB).await?;
+    let response = HTTP_CLIENT
+        .get(DISTROLISTGITHUB)
+        .send()
+        .await?
+        .error_for_status()?;
     let json_text = response.text().await?;
     let distros: Vec<distro> = serde_json::from_str(&json_text)?;
 
-    let file_path = get_local_distro_list();
-    fs::write(&file_path, json_text)?;
+    fs::create_dir_all(get_config_dir())?;
+    fs::write(get_local_distro_list(), json_text)?;
 
     Ok(distros)
 }
+
+fn keep_visible_logo_sources(mut updated: Vec<distro>, current: &[distro]) -> Vec<distro> {
+    for distro in &mut updated {
+        if let Some(previous) = current.iter().find(|previous| previous.id == distro.id) {
+            distro.logo_source = previous.logo_source.clone();
+        }
+    }
+    updated
+}
+
+async fn hydrate_logos(
+    mut items: Vec<distro>,
+    cache_dir: &Path,
+    refresh: bool,
+) -> (Vec<distro>, Vec<String>) {
+    let mut tasks = tokio::task::JoinSet::new();
+
+    for (index, distro) in items.iter().enumerate() {
+        let client = HTTP_CLIENT.clone();
+        let cache_dir = cache_dir.to_path_buf();
+        let id = distro.id;
+        let url = distro.image.clone();
+
+        tasks.spawn(async move {
+            let cached = crate::logo_source::load_logo(&client, &cache_dir, id, &url, refresh).await;
+            (index, cached)
+        });
+    }
+
+    let mut warnings = Vec::new();
+    while let Some(result) = tasks.join_next().await {
+        match result {
+            Ok((index, cached)) => {
+                items[index].logo_source = cached.source;
+                if let Some(warning) = cached.warning {
+                    error!("logo refresh failed for {}: {warning}", items[index].name);
+                    warnings.push(items[index].name.clone());
+                }
+            }
+            Err(error) => {
+                error!("logo refresh task failed: {error}");
+                warnings.push("an image task".to_string());
+            }
+        }
+    }
+
+    (items, warnings)
+}
+
+fn image_status(catalog_error: Option<String>, warnings: Vec<String>) -> String {
+    let mut messages = Vec::new();
+    if let Some(error) = catalog_error {
+        messages.push(error);
+    }
+    if !warnings.is_empty() {
+        messages.push(format!(
+            "Logo refresh failed for {}. Cached images were retained where available; retry Refresh list.",
+            warnings.join(", ")
+        ));
+    }
+    messages.join(" ")
+}
+
 #[component]
 pub fn distro_list() -> Element {
     let mut items_signal = use_signal(Vec::<distro>::new);
     let mut status_signal = use_signal(|| String::from("Initializing..."));
-    let mut is_loading = use_signal(|| false);
+    let mut is_loading = use_signal(|| true);
     let mut active_distro_id = use_signal(|| None::<u8>);
     let mut is_showing_more = use_signal(|| false);
 
     use_effect(move || {
         spawn(async move {
-            let file_path = get_local_distro_list();
+            let items = match read_from_disk() {
+                Ok(items) => {
+                    items_signal.set(items.clone());
+                    items
+                }
+                Err(error) => {
+                    info!("no usable cached list: {error}");
+                    status_signal.set("Downloading distro catalog...".to_string());
+                    match download_and_save_list().await {
+                        Ok(items) => {
+                            items_signal.set(items.clone());
+                            items
+                        }
+                        Err(download_error) => {
+                            error!("initial catalog download failed: {download_error}");
+                            status_signal.set(format!("Catalog download failed: {download_error}"));
+                            is_loading.set(false);
+                            return;
+                        }
+                    }
+                }
+            };
 
-            if file_path.exists() {
-                info!("list found locally. loading from disk.");
-                match read_from_disk() {
-                    Ok(items) => {
-                        items_signal.set(items);
-                        status_signal.set("".to_string());
-                    }
-                    Err(e) => {
-                        error!("failed to read cached list: {e}");
-                        status_signal.set(format!("Cache read failed: {e}"));
-                    }
-                }
-            } else {
-                info!("list not found locally. downloading.");
-                status_signal.set("Downloading...".to_string());
-                is_loading.set(true);
-                let configdir = get_config_dir();
-                fs::create_dir(configdir).expect("unable to create config directory! (~/.config/distroshop/)");
-                match download_and_save_list().await {
-                    Ok(items) => {
-                        items_signal.set(items);
-                        status_signal.set("".to_string());
-                    }
-                    Err(e) => {
-                        error!("download failed: {e}");
-                        status_signal.set(format!("Download failed! {e}"));
-                    }
-                }
-                is_loading.set(false);
-            }
+            status_signal.set("Loading distro images...".to_string());
+            let (items, warnings) =
+                hydrate_logos(items, &get_config_dir().join("images"), false).await;
+            items_signal.set(items);
+            status_signal.set(image_status(None, warnings));
+            is_loading.set(false);
         });
     });
+
     let handle_manual_sync = move |_| {
         to_owned![items_signal, status_signal, is_loading];
+        let current_items = items_signal();
         spawn(async move {
             is_loading.set(true);
-            status_signal.set("Downloading data from GitHub...".to_string());
+            status_signal.set("Refreshing distro catalog and images...".to_string());
 
-            match download_and_save_list().await {
+            let (items, catalog_error) = match download_and_save_list().await {
                 Ok(items) => {
-                    items_signal.set(items);
+                    let items = keep_visible_logo_sources(items, &current_items);
+                    items_signal.set(items.clone());
                     info!("successfully updated local list");
-                    status_signal.set("Updated local list!".to_string());
-                    status_signal.set("".to_string());
+                    (items, None)
                 }
-                Err(e) => {
-                    error!("Manual refresh failed: {e}");
-                    status_signal.set(format!("Sync error: {e}"));
-                    status_signal.set("".to_string());
+                Err(error) => {
+                    error!("manual catalog refresh failed: {error}");
+                    (
+                        current_items,
+                        Some(format!(
+                            "Catalog refresh failed: {error}. Refreshing cached distro images."
+                        )),
+                    )
                 }
-            }
+            };
+
+            let (items, warnings) =
+                hydrate_logos(items, &get_config_dir().join("images"), true).await;
+            items_signal.set(items);
+            status_signal.set(image_status(catalog_error, warnings));
             is_loading.set(false);
         });
     };
@@ -148,10 +228,12 @@ pub fn distro_list() -> Element {
                     
                     li { class: "distro-card",
                         div { class: "distro-image-frame",
-                            img {
-                                class: "distro-image",
-                                src: "{crate::logo_source::distro_logo_source(&distro.name, &distro.image)}",
-                                alt: "{distro.name} logo",
+                            if let Some(source) = &distro.logo_source {
+                                img {
+                                    class: "distro-image",
+                                    src: "{source}",
+                                    alt: "{distro.name} logo",
+                                }
                             }
                         }
                         div { class: "distro-details",
