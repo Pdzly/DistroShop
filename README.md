@@ -12,20 +12,18 @@ This project is still early-stage, but the basic flow is there: it loads a distr
 - Displays each distro's image, summary, and full description
 - Downloads the selected ISO
 - Flashes the ISO to a chosen block device
-- Offers a `safe` and `fast` flash mode
+- Offers a `safe` and `fast` flash mode (streaming the file little by little or loading the entire iso into memory and then writing to disk)
 
 ## Current status
 
-This is not a polished release and things may change quickly.
-
-It works best for a simple local desktop workflow on Linux (Windows support is planned and will release before HL3). Make sure to use `lsblk` to check block device, because writing to a block device deletes previous data on it.
+Supported on MacOS, Windows, and Linux.
+MacOS users have to compile from source because i can't do it myself on Linux
 
 ## Requirements
 
 - Rust and Cargo
-- Linux desktop environment
-- A target USB device such as `/dev/sdb`
-- `pkexec` 
+- A target USB device 
+- A graphical desktop environment (if on linux)
 
 ## Running the app
 
@@ -60,10 +58,14 @@ The app writes directly to the selected block device. Make sure you are targetin
 src/
 ├── main.rs          # app entry point and launch logic
 ├── list_handler.rs  # distro catalog loading, caching, and UI
-├── flash_handler.rs  # download + flashing logic
+└── flashing/        # download + flashing logic
+    ├── mod.rs
+    ├── flash_handler.rs
+    ├── flasher_unix.rs
+    └── flasher_win.rs
 assets/
 ├── distros.json     # distro catalog used by the app
-├── main.css        # styling
+└── main.css        # styling
 ```
 
 ## License
